@@ -375,6 +375,7 @@ The server accepts anything it can safely score and flags the rest for review. A
 | Topic | Decision |
 | --- | --- |
 | Repeat runs | A participant may run an event as often as they like. Every run is stored and published. When the event counts towards a series, only the participant's first run counts for the series |
+| Participant matching | Runs are matched to the same participant by name only, across runs of an event and across the events of a series |
 | Manual punching | Not provided. Handling the phone on course costs time and is unsafe in urban terrain. The app only records the track; the organiser reviews doubtful controls and accepts or denies each one |
 | Track retention and visibility | Tracks are kept indefinitely and are publicly visible in the app and on the results site |
 | Mass starts | Supported with tap to start: all participants tap Start on the start signal |
@@ -382,4 +383,3 @@ The server accepts anything it can safely score and flags the rest for review. A
 ## Open questions
 
 - [ ] In a single event's results, which run is ranked when a participant has several: the first, or their best? Later runs could be listed beneath as unranked repeats.
-- [ ] How does the host recognise the same participant across runs and events for series scoring: name plus year of birth, membership number, or the app install?
