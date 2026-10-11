@@ -46,6 +46,10 @@ Open `http://<this machine>:8000/admin` and create the owner account. All data i
 
 To make the server reachable from phones over HTTPS, see **[docs/install-synology.md](docs/install-synology.md)**, which covers Cloudflare Tunnel and Synology's built-in reverse proxy.
 
+### On a Windows desktop (for trying it out)
+
+Install Python 3.12 from python.org (tick **Add python.exe to PATH**), then double-click **`start-windows.bat`**. The first run installs SmartNav and offers to add sample data; after that it starts straight away and opens the admin site at http://localhost:8000/admin. Close the window to stop the server. A desktop is fine for testing, but phones need an always-on HTTPS server for real events.
+
 ### Without Docker
 
 Python 3.11 or later:
