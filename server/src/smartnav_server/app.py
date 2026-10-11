@@ -105,6 +105,12 @@ def create_app() -> FastAPI:
         return render(request, "public/message.html", 500, title="Server error",
                       message="Something went wrong. The problem has been logged.")
 
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        from fastapi.responses import FileResponse
+
+        return FileResponse(Path(__file__).parent / "static" / "favicon.svg", media_type="image/svg+xml")
+
     @app.get("/healthz", include_in_schema=False)
     def healthz():
         return {"ok": True, "version": __version__}

@@ -8,7 +8,7 @@ title SmartNav server
 
 rem ---- find Python 3.11 or later -------------------------------------------
 set "PY="
-rem Prefer Python 3.12 or 3.13, which all of SmartNav's parts are tested with.
+rem Prefer Python 3.12 or 3.13, which all of SmartNav's dependencies support.
 py -3.12 -c "" >nul 2>nul && set "PY=py -3.12"
 if not defined PY py -3.13 -c "" >nul 2>nul && set "PY=py -3.13"
 if not defined PY where py >nul 2>nul && set "PY=py -3"
