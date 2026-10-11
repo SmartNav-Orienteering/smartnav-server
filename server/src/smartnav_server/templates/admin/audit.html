@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Change log · SmartNav admin{% endblock %}
+{% block content %}
+<h1>Change log</h1>
+<div class="card table-wrap">
+<table>
+  <thead><tr><th>When (UTC)</th><th>Who</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead>
+  <tbody>
+  {% for r in rows %}<tr><td class="small">{{ r.at.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ r.user_name }}</td><td>{{ r.action }}</td><td class="mono small">{{ r.target }}</td><td class="small">{{ r.detail }}</td></tr>
+  {% else %}<tr><td colspan="5" class="muted">No changes yet.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

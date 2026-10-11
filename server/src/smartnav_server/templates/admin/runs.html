@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Runs · {{ ev.name }}{% endblock %}
+{% block content %}
+<p class="small"><a href="/admin/events/{{ ev.id }}">← {{ ev.name }}</a></p>
+<div class="spread">
+  <h1>Runs</h1>
+  <div class="row">
+    <a class="btn btn-small {% if show == 'all' %}btn-primary{% endif %}" href="?show=all">All</a>
+    <a class="btn btn-small {% if show == 'review' %}btn-primary{% endif %}" href="?show=review">Needs review</a>
+    <form method="post" action="/admin/events/{{ ev.id }}/rescore" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-small">Rescore all</button></form>
+    <a class="btn btn-small" href="/admin/events/{{ ev.id }}/export.csv">Export CSV</a>
+  </div>
+</div>
+<div class="card table-wrap">
+<table>
+  <thead><tr><th class="num">Pos</th><th>Name</th><th>Run</th><th>Started</th><th>Result</th><th>Status</th><th>Source</th></tr></thead>
+  <tbody>
+  {% for e in entries %}{% set r = e.result or {} %}
+    <tr class="{{ '' if e.first_run else 'repeat' }}">
+      <td class="num">{{ e.position if e.first_run and e.ranked else '' }}</td>
+      <td><a href="/admin/runs/{{ e.sub.id }}">{{ e.name }}</a></td>
+      <td>{{ 'First' if e.first_run else 'Repeat ' ~ e.run_number }}</td>
+      <td class="small">{{ local(e.sub.started_at, ev.timezone, "%d %b %H:%M") }}</td>
+      <td>{{ r.get('display', '') }}</td>
+      <td>{% if e.sub.status == 'needs_review' %}<span class="badge b-warn">Needs review</span>{% elif e.sub.status == 'rejected' %}<span class="badge b-bad">Rejected</span>{% elif e.sub.disqualified %}<span class="badge b-bad">DSQ</span>{% else %}<span class="badge b-ok">Scored</span>{% endif %}</td>
+      <td class="small">{{ 'GPX upload' if e.sub.source == 'gpx' else 'App' }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7" class="muted">No runs{{ ' need review' if show == 'review' else ' yet' }}.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# SmartNav: club data and local settings stay off GitHub
+data/
+.env

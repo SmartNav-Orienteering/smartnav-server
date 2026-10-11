@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Settings · SmartNav admin{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<form class="card" method="post" action="/admin/settings">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="fields fields-3">
+    <div><label for="club">Club name</label><input id="club" name="club_name" type="text" value="{{ club_name }}"><div class="hint">Default for new events and shown on the public site.</div></div>
+    <div><label for="tz">Default time zone</label><select id="tz" name="timezone">{% for z in timezones %}<option {% if z == timezone %}selected{% endif %}>{{ z }}</option>{% endfor %}</select></div>
+    <div><label for="r">Default punch radius (m)</label><input id="r" name="default_radius" type="number" min="3" max="100" value="{{ default_radius }}"></div>
+  </div>
+  <label for="classes">Age classes</label>
+  <textarea id="classes" name="classes">{{ classes_text }}</textarea>
+  <div class="hint">One class per line: <code>Name, minimum age, maximum age</code>. Leave an age blank for no limit. Age is the age reached in the year of the run, worked out from the year of birth. The first matching line is used.</div>
+  <div class="actions"><button class="btn btn-primary">Save settings</button></div>
+</form>
+<div class="card">
+  <h2>Installed event types</h2>
+  <table><thead><tr><th>ID</th><th>Name</th><th>Description</th></tr></thead><tbody>
+  {% for id, t in plugins.items() %}<tr><td><code>{{ id }}</code></td><td>{{ t.name }}</td><td class="small">{{ t.description }}</td></tr>{% endfor %}
+  </tbody></table>
+  <p class="small muted">Club plugins are Python packages registering the <code>smartnav.event_types</code> entry point. Install them and restart the server.</p>
+</div>
+<p><a href="/admin/audit">View the change log</a> · <a href="/admin/account">Change your password</a></p>
+{% endblock %}

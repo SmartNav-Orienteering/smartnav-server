@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ sub.participant_name }} · {{ ev.name }}{% endblock %}
+{% block content %}
+<p class="small"><a href="/events/{{ ev.id }}/results">← {{ ev.name }} results</a></p>
+<div class="grid grid-main">
+  <div>
+    <h1>{{ sub.participant_name }}</h1>
+    <div class="muted">{{ (sub.participant or {}).get('club', '') }} · started {{ local(sub.started_at, ev.timezone) }}</div>
+    <div class="headline">{{ doc.summary.headline }}</div>
+    {% for l in doc.summary.lines %}<div>{{ l }}</div>{% endfor %}
+    {% for m in doc.messages %}<div class="notice">{{ m }}</div>{% endfor %}
+  </div>
+  <div class="card">
+    <h3>Controls</h3>
+    <table>
+      <thead><tr><th>Control</th><th>Status</th><th class="num">{% if ev.event_type == 'line' %}Split{% else %}Time{% endif %}</th>{% if ev.event_type == 'score' %}<th class="num">Pts</th>{% endif %}</tr></thead>
+      <tbody>
+      {% for c in doc.controls %}
+        <tr><td><strong>{{ c.code }}</strong></td>
+          <td>{% if c.status in ('ok','accepted') %}<span class="badge b-ok">{{ CONTROL_STATUS_LABELS.get(c.status, c.status) }}</span>{% else %}<span class="badge b-bad">{{ CONTROL_STATUS_LABELS.get(c.status, c.status) }}</span>{% endif %}</td>
+          <td class="num">{% if c.split_s is not none %}{{ duration(c.split_s) }}{% endif %}</td>
+          {% if ev.event_type == 'score' %}<td class="num">{{ c.points if c.status in ('ok','accepted') else '' }}</td>{% endif %}</tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card">
+  {% set replay = true %}{% include "_map.html" %}
+</div>
+{% endblock %}

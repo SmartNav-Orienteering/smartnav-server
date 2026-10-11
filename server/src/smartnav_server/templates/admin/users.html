@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Users · SmartNav admin{% endblock %}
+{% block content %}
+<h1>Users</h1>
+<p class="muted small">The owner manages users and settings. Delegates can create and edit events and review runs.</p>
+<div class="card table-wrap">
+<table>
+  <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for u in users %}
+    <tr>
+      <td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.role|capitalize }}</td>
+      <td>{% if u.active %}<span class="badge b-ok">Active</span>{% else %}<span class="badge">Inactive</span>{% endif %}</td>
+      <td>
+        <details><summary class="small">Manage</summary>
+          <form method="post" action="/admin/users/{{ u.id }}" class="row" style="margin-top:6px">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="password" name="password" placeholder="New password" minlength="10" style="max-width:200px" aria-label="New password">
+            <button class="btn btn-small" name="action" value="password">Set password</button>
+          </form>
+          {% if u.id != user.id %}
+          <form method="post" action="/admin/users/{{ u.id }}" style="margin-top:6px">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            {% if u.active %}<button class="btn btn-small btn-danger" name="action" value="deactivate">Deactivate</button>
+            {% else %}<button class="btn btn-small" name="action" value="activate">Re-activate</button>{% endif %}
+          </form>
+          {% endif %}
+        </details>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<form class="card" method="post" action="/admin/users">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h2>Add a user</h2>
+  <div class="fields fields-2">
+    <div><label for="n">Name</label><input id="n" name="name" type="text" required></div>
+    <div><label for="e">Email</label><input id="e" name="email" type="email" required></div>
+    <div><label for="p">Temporary password</label><input id="p" name="password" type="password" required minlength="10"><div class="hint">At least 10 characters. They can change it under Account.</div></div>
+    <div><label for="r">Role</label><select id="r" name="role"><option value="delegate">Delegate</option><option value="owner">Owner</option></select></div>
+  </div>
+  <div class="actions"><button class="btn btn-primary">Add user</button></div>
+</form>
+{% endblock %}

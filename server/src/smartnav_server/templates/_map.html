@@ -1,0 +1,13 @@
+{# Include with: {% set replay = true %}{% include "_map.html" %} and map_cfg in context #}
+<link rel="stylesheet" href="/static/leaflet/leaflet.css">
+<div id="map" aria-label="Map of the course and tracks"></div>
+{% if replay %}
+<div class="replay no-print">
+  <button type="button" class="btn btn-small" id="replay-play">Play</button>
+  <input type="range" id="replay-t" min="0" max="0" value="0" step="1" aria-label="Time since start">
+  <span id="replay-label" class="mono">0:00</span>
+</div>
+{% endif %}
+<script src="/static/leaflet/leaflet.js"></script>
+<script src="/static/trackmap.js"></script>
+<script>SmartNavMap.init({{ map_cfg | tojson }});</script>

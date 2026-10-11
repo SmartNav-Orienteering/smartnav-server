@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ club_name or "SmartNav" }} results{% endblock %}
+{% block content %}
+<h1>{{ club_name or "SmartNav" }} events and results</h1>
+<p class="muted">Download events in the SmartNav app by scanning the QR code on your paper map.</p>
+
+{% if series %}
+<h2>Series</h2>
+<div class="card">
+  <ul class="tree">
+  {% for f in series %}<li><a href="/series/{{ f.id }}">{{ f.name }}</a> <span class="muted small">{{ f.events|selectattr('status','in',['published','archived'])|list|length }} events</span></li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<h2>Events</h2>
+{% if not events %}<div class="card muted">No events have been published yet.</div>{% endif %}
+<div class="card">
+<div class="table-wrap"><table>
+  <thead><tr><th>Event</th><th>Type</th><th>Open</th><th class="num">Runs</th><th></th></tr></thead>
+  <tbody>
+  {% for e in events %}
+    <tr>
+      <td><a href="/events/{{ e.id }}/results"><strong>{{ e.name }}</strong></a>{% if e.folder %}<div class="muted small">{{ e.folder.name }}</div>{% endif %}</td>
+      <td>{{ e.event_type|capitalize }}</td>
+      <td class="small">{{ local(e.opens_at, e.timezone, "%d %b") }} – {{ local(e.closes_at, e.timezone, "%d %b %Y") }}
+        {% if e.status == 'archived' %}<span class="badge">Closed</span>{% endif %}</td>
+      <td class="num">{{ e.submissions|length }}</td>
+      <td>{% if e.status == 'published' %}<a class="small" href="/events/{{ e.id }}/upload">Upload a GPX file</a>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+</div>
+{% endblock %}

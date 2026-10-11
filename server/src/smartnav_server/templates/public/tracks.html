@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Tracks · {{ ev.name }}{% endblock %}
+{% block content %}
+<p class="small"><a href="/events/{{ ev.id }}/results">← {{ ev.name }} results</a></p>
+<h1>Compare tracks</h1>
+{% set replay = true %}{% include "_map.html" %}
+<div class="legend">
+  {% for t in map_cfg.tracks %}<span><span class="swatch" style="background: {{ t.colour }}"></span><a href="/runs/{{ t.id }}">{{ t.name }}</a></span>{% endfor %}
+</div>
+<p class="small muted">Drag the slider or press Play to replay the runs from the start. Each run is timed from its own start.</p>
+{% endblock %}

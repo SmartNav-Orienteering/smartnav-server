@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Review · SmartNav admin{% endblock %}
+{% block content %}
+<h1>Runs to review</h1>
+<p class="muted small">Check the track against each control circle, accept or deny doubtful controls, correct names, then mark the run as reviewed.</p>
+<div class="card table-wrap">
+<table>
+  <thead><tr><th>Event</th><th>Name</th><th>Received</th><th>Why</th></tr></thead>
+  <tbody>
+  {% for s in subs %}
+    <tr><td>{{ s.event.name }}</td><td><a href="/admin/runs/{{ s.id }}">{{ s.participant_name }}</a></td>
+      <td class="small">{{ local(s.received_at, s.event.timezone, "%d %b %H:%M") }}</td>
+      <td class="small">{{ s.review_reasons|join(' ') }}</td></tr>
+  {% else %}
+    <tr><td colspan="4" class="muted">Nothing to review.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

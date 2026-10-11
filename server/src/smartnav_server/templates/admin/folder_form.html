@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit folder' if folder else 'New folder' }} · SmartNav admin{% endblock %}
+{% block content %}
+<p class="small"><a href="/admin">← Events</a></p>
+<h1>{{ 'Edit folder' if folder else 'New folder or series' }}</h1>
+<form class="card" method="post" action="{{ '/admin/folders/%d'|format(folder.id) if folder else '/admin/folders/new' }}">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="name">Name</label><input id="name" name="name" type="text" required value="{{ folder.name if folder else '' }}" placeholder="e.g. 2026 Summer Street-O Series">
+  <label for="parent">Inside folder</label>
+  <select id="parent" name="parent_id"><option value="">(top level)</option>
+    {% for f, label in folders %}{% if not folder or f.id != folder.id %}<option value="{{ f.id }}" {% if parent_id == f.id %}selected{% endif %}>{{ label }}</option>{% endif %}{% endfor %}
+  </select>
+  <label class="check"><input type="checkbox" name="is_series" value="true" {% if folder and folder.is_series %}checked{% endif %}> This folder is a series (show standings across its events)</label>
+  <label for="desc">Description <span class="hint">optional, shown on the series page</span></label>
+  <textarea id="desc" name="description" style="font-family:inherit">{{ folder.description if folder else '' }}</textarea>
+  <div class="actions"><button class="btn btn-primary">Save</button></div>
+</form>
+{% if folder %}
+<form method="post" action="/admin/folders/{{ folder.id }}/delete" class="card danger-zone">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="spread"><span>Delete this folder. It must be empty.</span><button class="btn btn-danger">Delete folder</button></div>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Upload a run · {{ ev.name }}{% endblock %}
+{% block content %}
+<p class="small"><a href="/events/{{ ev.id }}/results">← {{ ev.name }} results</a></p>
+<h1>Upload a GPX file</h1>
+<p>Use this if the SmartNav app failed and you recorded your run with a watch or another app. Your start time is taken as the moment you left the start circle.</p>
+{% if error %}<div class="flash flash-error">{{ error }}</div>{% endif %}
+<form class="card" method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="fields fields-3">
+    <div><label for="name">Name</label><input id="name" name="name" type="text" required value="{{ form.name if form else '' }}"></div>
+    <div><label for="club">Club</label><input id="club" name="club" type="text" value="{{ form.club if form else '' }}"></div>
+    <div><label for="yob">Year of birth</label><input id="yob" name="year_of_birth" type="number" min="1900" max="2100" value="{{ form.year_of_birth if form else '' }}"><div class="hint">Used only to work out your age class. Never published.</div></div>
+  </div>
+  <label for="file">GPX file</label>
+  <input id="file" name="file" type="file" accept=".gpx,application/gpx+xml" required>
+  <label class="check"><input type="checkbox" name="consent" value="true"> I understand my name, result and track will be public and kept indefinitely.</label>
+  <div class="actions"><button class="btn btn-primary">Upload and score</button></div>
+  <p class="small muted">Uploaded runs are provisional until the organiser has checked them.</p>
+</form>
+{% endblock %}

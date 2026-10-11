@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ folder.name }} series{% endblock %}
+{% block content %}
+<h1>{{ folder.name }}</h1>
+{% if folder.description %}<p>{{ folder.description }}</p>{% endif %}
+<p class="small muted">Only each person's first run of each event counts. Points per event: 100 for the winner; others scaled by time (winner's time ÷ your time) or by score (your score ÷ top score).</p>
+<div class="card table-wrap">
+<table>
+  <thead><tr><th class="num">Pos</th><th>Name</th><th>Club</th><th>Class</th>
+    {% for e in events %}<th class="num"><a href="/events/{{ e.id }}/results" title="{{ e.name }}">{{ loop.index }}</a></th>{% endfor %}
+    <th class="num">Total</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr><td class="num">{{ r.position }}</td><td>{{ r.name }}</td><td>{{ r.club }}</td><td>{{ r.age_class }}</td>
+      {% for e in events %}<td class="num">{{ r.per_event.get(e.id, '') }}</td>{% endfor %}
+      <td class="num"><strong>{{ r.total }}</strong></td></tr>
+  {% else %}
+    <tr><td colspan="{{ 5 + events|length }}" class="muted">No results yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<h3>Events</h3>
+<ol>{% for e in events %}<li><a href="/events/{{ e.id }}/results">{{ e.name }}</a> <span class="muted small">{{ local(e.opens_at, e.timezone, "%d %b %Y") }}</span></li>{% endfor %}</ol>
+{% endblock %}

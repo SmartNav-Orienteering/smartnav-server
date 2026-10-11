@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>QR · {{ ev.name }}</title>
+<style>
+  body { font-family: system-ui, sans-serif; text-align: center; padding: 40px; color: #000; background: #fff; }
+  .qr svg { width: 9cm; height: 9cm; }
+  h1 { margin-bottom: 4px; } p { margin: 6px 0; }
+  .url { font-family: monospace; font-size: 11px; word-break: break-all; color: #444; }
+  @media print { button { display: none; } }
+</style></head>
+<body>
+  <h1>{{ ev.name }}</h1>
+  <p>Scan with the SmartNav app to download this course.</p>
+  <div class="qr">{{ qr_svg|safe }}</div>
+  <p class="url">{{ join }}</p>
+  <button onclick="window.print()">Print</button>
+</body></html>

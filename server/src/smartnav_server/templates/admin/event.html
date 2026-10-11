@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}{{ ev.name }} · SmartNav admin{% endblock %}
+{% block content %}
+<p class="small"><a href="/admin">← Events</a>{% if ev.folder %} / {{ ev.folder.name }}{% endif %}</p>
+<div class="spread">
+  <div>
+    <h1>{{ ev.name }}</h1>
+    <div class="row">
+      {% if ev.status == 'draft' %}<span class="badge">Draft</span>{% elif ev.status == 'published' %}<span class="badge b-ok">Published</span>{% else %}<span class="badge">Archived</span>{% endif %}
+      <span class="muted small">{{ et.name if et else ev.event_type }} · ID <code>{{ ev.id }}</code>{% if latest %} · course version {{ ev.versions|length }}{% endif %}</span>
+    </div>
+  </div>
+  <div class="row">
+    <a class="btn" href="/admin/events/{{ ev.id }}/runs">Runs ({{ counts.runs }}){% if counts.review %} · <span class="badge b-warn">{{ counts.review }} to review</span>{% endif %}</a>
+    {% if ev.status != 'draft' %}<a class="btn" href="/events/{{ ev.id }}/results">Public results</a>{% endif %}
+  </div>
+</div>
+
+{% if problems %}
+<div class="notice"><strong>Before publishing:</strong><ul>{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul></div>
+{% elif ev.status == 'draft' %}
+<div class="notice">Ready to publish. Once published, the app can download the course.</div>
+{% elif unpublished_changes %}
+<div class="notice">You have changed the course or scoring since it was published. Choose <strong>Publish changes</strong> to make them live. Runs already submitted keep the course version they ran, and the new scoring is applied to all runs.</div>
+{% endif %}
+
+<div class="card">
+  <div class="spread">
+    <div class="row">
+      {% if ev.status == 'draft' %}
+        <form method="post" action="/admin/events/{{ ev.id }}/publish" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-primary" {% if problems %}disabled{% endif %}>Publish</button></form>
+      {% elif ev.status == 'published' %}
+        {% if unpublished_changes %}<form method="post" action="/admin/events/{{ ev.id }}/publish" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-primary" {% if problems %}disabled{% endif %}>Publish changes</button></form>{% endif %}
+        <form method="post" action="/admin/events/{{ ev.id }}/status" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="status" value="archived"><button class="btn">Close and archive</button></form>
+        <form method="post" action="/admin/events/{{ ev.id }}/status" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="status" value="draft"><button class="btn">Unpublish</button></form>
+      {% else %}
+        <form method="post" action="/admin/events/{{ ev.id }}/status" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="status" value="published"><button class="btn">Re-open</button></form>
+      {% endif %}
+    </div>
+    <div class="row small"><a href="/admin/events/{{ ev.id }}/export.csv">Export results (CSV)</a></div>
+  </div>
+</div>
+
+<div class="grid grid-main">
+<div>
+  <form class="card" id="details" method="post" action="/admin/events/{{ ev.id }}/details">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h2>Details</h2>
+    <div class="fields fields-2">
+      <div><label for="name">Name</label><input id="name" name="name" type="text" required value="{{ ev.name }}"></div>
+      <div><label for="club">Club</label><input id="club" name="club" type="text" value="{{ ev.club }}"></div>
+      <div><label for="type">Event type</label>
+        <select id="type" name="event_type">{% for id, t in types.items() %}<option value="{{ id }}" {% if id == ev.event_type %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+      <div><label for="folder">Folder</label>
+        <select id="folder" name="folder_id"><option value="">(none)</option>
+        {% for f, label in folders %}<option value="{{ f.id }}" {% if ev.folder_id == f.id %}selected{% endif %}>{{ label }}{% if f.is_series %} (series){% endif %}</option>{% endfor %}</select></div>
+      <div><label for="opens">Opens</label><input id="opens" name="opens_at" type="datetime-local" required value="{{ local_input(ev.opens_at, ev.timezone) }}"></div>
+      <div><label for="closes">Closes</label><input id="closes" name="closes_at" type="datetime-local" required value="{{ local_input(ev.closes_at, ev.timezone) }}"></div>
+      <div><label for="tz">Time zone</label>
+        <select id="tz" name="timezone">{% for z in timezones %}<option {% if z == ev.timezone %}selected{% endif %}>{{ z }}</option>{% endfor %}</select></div>
+      <div><label for="limit">Time limit (minutes) <span class="hint">blank for none; typically 60 for score</span></label><input id="limit" name="time_limit_min" type="number" min="1" step="1" value="{{ ev.time_limit_min|int if ev.time_limit_min else '' }}"></div>
+      <div><label for="radius">Punch radius (m) <span class="hint">same for every control, start and finish</span></label><input id="radius" name="punch_radius_m" type="number" min="3" max="100" step="1" value="{{ ev.punch_radius_m|int }}"></div>
+      <div><label for="info">Event info page <span class="hint">optional link</span></label><input id="info" name="info_url" type="url" value="{{ ev.info_url }}"></div>
+      <div><label for="smode">Start</label>
+        <select id="smode" name="start_mode"><option value="punch" {% if (ev.start or {}).get('mode') == 'punch' %}selected{% endif %}>On reaching the start circle</option>
+          <option value="tap" {% if (ev.start or {}).get('mode') == 'tap' %}selected{% endif %}>Tap Start button (use for mass starts)</option></select></div>
+      <div><label for="fmode">Finish</label>
+        <select id="fmode" name="finish_mode"><option value="punch" {% if (ev.finish or {}).get('mode','punch') == 'punch' %}selected{% endif %}>On reaching the finish circle</option>
+          <option value="tap" {% if (ev.finish or {}).get('mode') == 'tap' %}selected{% endif %}>Tap Finish button</option></select></div>
+    </div>
+    <div class="actions"><button class="btn btn-primary">Save details</button></div>
+  </form>
+
+  <div class="card" id="course">
+    <h2>Course</h2>
+    <p class="small muted">Import a KML file exported from your course-planning tool or Google Earth. Each placemark's name is the control code; name the start <code>S</code> and the finish <code>F</code> (if the finish is not given, it is the same as the start). Importing replaces the current controls.</p>
+    <form method="post" action="/admin/events/{{ ev.id }}/import" enctype="multipart/form-data" class="row">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="file" name="file" accept=".kml,.kmz" required>
+      <button class="btn">Import KML / KMZ</button>
+    </form>
+    <div class="table-wrap" style="margin-top:10px">
+    <table>
+      <thead><tr><th>Code</th><th class="num">Lat</th><th class="num">Lon</th></tr></thead>
+      <tbody>
+        {% if ev.start %}<tr><td><strong>Start</strong></td><td class="num mono">{{ '%.6f'|format(ev.start.lat) }}</td><td class="num mono">{{ '%.6f'|format(ev.start.lon) }}</td></tr>{% endif %}
+        {% for c in ev.controls %}<tr><td><strong>{{ c.code }}</strong></td><td class="num mono">{{ '%.6f'|format(c.lat) }}</td><td class="num mono">{{ '%.6f'|format(c.lon) }}</td></tr>{% endfor %}
+        {% if ev.finish %}<tr><td><strong>Finish</strong></td><td class="num mono">{{ '%.6f'|format(ev.finish.lat) }}</td><td class="num mono">{{ '%.6f'|format(ev.finish.lon) }}</td></tr>{% endif %}
+        {% if not ev.controls %}<tr><td colspan="3" class="muted">No controls yet.</td></tr>{% endif %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  {% if et and et.params %}
+  <form class="card" id="scoring" method="post" action="/admin/events/{{ ev.id }}/scoring">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h2>Scoring <span class="hint">kept on this server; never sent to the phone</span></h2>
+    {% for p in et.params %}
+      {% if p.kind == 'points' %}
+        <label>{{ p.label }}</label>
+        {% if not ev.controls %}<p class="muted small">Import the controls first.</p>{% endif %}
+        <div class="fields fields-3">
+        {% for c in ev.controls %}
+          <div class="row"><label for="pt-{{ c.code }}" style="width:52px;margin:0">{{ c.code }}</label>
+            <input id="pt-{{ c.code }}" name="points_{{ c.code }}" type="number" min="0" step="1" style="width:100px" value="{{ (ev.params.points or {}).get(c.code, '') }}"></div>
+        {% endfor %}
+        </div>
+        <div class="hint">Blank uses the default points.</div>
+      {% elif p.kind == 'bool' %}
+        <label class="check"><input type="checkbox" name="{{ p.key }}" {% if ev.params.get(p.key, p.default) %}checked{% endif %}> {{ p.label }}</label>
+      {% else %}
+        <label for="p-{{ p.key }}">{{ p.label }}</label>
+        <input id="p-{{ p.key }}" name="{{ p.key }}" type="number" step="1" min="0" style="max-width:200px" value="{{ ev.params.get(p.key) if ev.params.get(p.key) is not none else '' }}" {% if p.required %}required{% endif %}>
+      {% endif %}
+    {% endfor %}
+    <div class="actions"><button class="btn btn-primary">Save scoring</button></div>
+  </form>
+  {% endif %}
+</div>
+
+<div>
+  <div class="card" id="map-card">
+    <h2 style="margin-top:0">Map</h2>
+    <div class="map-small">{% set replay = false %}{% include "_map.html" %}</div>
+    <p class="small muted">Import a KMZ containing a map image overlay to show tracks on your club map. Without one, OpenStreetMap is used.</p>
+    <form method="post" action="/admin/events/{{ ev.id }}/map" enctype="multipart/form-data" class="row">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="file" name="file" accept=".kmz" required>
+      <button class="btn">Import map KMZ</button>
+    </form>
+    {% if ev.map_image %}<form method="post" action="/admin/events/{{ ev.id }}/map/delete" class="row" style="margin-top:8px"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-small btn-danger">Remove map image</button></form>{% endif %}
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">QR code for the paper map</h2>
+    <div class="qr">{{ qr_svg|safe }}</div>
+    <p class="small mono" style="word-break: break-all">{{ join }}</p>
+    <div class="row"><a class="btn btn-small" href="/admin/events/{{ ev.id }}/print" target="_blank">Printable page</a><a class="btn btn-small" href="/admin/events/{{ ev.id }}/qr.svg" download>Download SVG</a></div>
+  </div>
+
+  <form class="card danger-zone" id="danger" method="post" action="/admin/events/{{ ev.id }}/delete">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h3>Delete event</h3>
+    <p class="small">Deletes the event and all {{ counts.runs }} run(s) permanently. To confirm, type the event ID <code>{{ ev.id }}</code>.</p>
+    <div class="row"><input name="confirm" type="text" style="max-width:260px" aria-label="Event ID to confirm"><button class="btn btn-danger">Delete</button></div>
+  </form>
+</div>
+</div>
+{% endblock %}

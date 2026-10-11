@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ ev.name }} results{% endblock %}
+{% macro status_badge(r, sub) -%}
+  {%- if not r -%}<span class="badge">Not scored</span>
+  {%- elif r.status != 'ok' -%}<span class="badge b-bad">{{ STATUS_LABELS.get(r.status, r.status) }}</span>
+  {%- endif -%}
+  {%- if sub.status == 'needs_review' %} <span class="badge b-warn" title="The organiser will review this run">Provisional</span>{% endif -%}
+{%- endmacro %}
+{% block content %}
+<div class="spread">
+  <div>
+    <h1>{{ ev.name }}</h1>
+    <div class="muted">{{ ev.event_type|capitalize }} course{% if ev.time_limit_min %} · {{ ev.time_limit_min|int }} min limit{% endif %} · {{ local(ev.opens_at, ev.timezone, "%d %b") }} – {{ local(ev.closes_at, ev.timezone, "%d %b %Y") }}{% if ev.club %} · {{ ev.club }}{% endif %}</div>
+  </div>
+  {% if ev.status == 'published' %}<a class="btn" href="/events/{{ ev.id }}/upload">Upload a GPX file</a>{% endif %}
+</div>
+<p class="small muted">Only each person's first run is ranked. Later runs are shown beneath it. Select runs and choose “Compare tracks” to see routes on the map.</p>
+
+<form method="get" action="/events/{{ ev.id }}/tracks" id="cmp">
+<div class="card">
+  <div class="spread no-print">
+    <div class="row">
+      {% if classes %}<label class="check" for="cls" style="margin:0">Class
+        <select id="cls" style="width:auto" onchange="filterClass(this.value)"><option value="">All</option>{% for c in classes %}<option>{{ c }}</option>{% endfor %}</select></label>{% endif %}
+    </div>
+    <div class="row"><span id="pick-msg" class="small" hidden>Tick one or more runs first.</span><button class="btn btn-primary" type="submit">Compare tracks</button></div>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th class="num">Pos</th><th>Name</th><th>Club</th><th>Class</th>
+      {% if ev.event_type == 'score' %}<th class="num">Points</th>{% endif %}<th class="num">Time</th><th></th></tr></thead>
+    <tbody>
+    {% for e in entries %}
+      {% set r = e.result %}
+      <tr data-class="{{ e.age_class }}">
+        <td><input type="checkbox" name="pick" value="{{ e.sub.id }}" aria-label="Select {{ e.name }}"></td>
+        <td class="num">{% if e.ranked %}{{ e.position }}{% endif %}</td>
+        <td><a href="/runs/{{ e.sub.id }}">{{ e.name }}</a></td>
+        <td>{{ e.club }}</td>
+        <td>{{ e.age_class }}{% if e.ranked and e.class_position %} <span class="muted small">({{ e.class_position }})</span>{% endif %}</td>
+        {% if ev.event_type == 'score' %}<td class="num">{% if r and r.score is not none %}{{ r.score }}{% endif %}</td>{% endif %}
+        <td class="num">{% if r %}{{ duration(r.elapsed_s) if r.elapsed_s is not none else '' }}{% endif %}</td>
+        <td>{{ status_badge(r, e.sub) }}</td>
+      </tr>
+      {% for x in e.repeats %}{% set rr = x.result %}
+      <tr class="repeat" data-class="{{ e.age_class }}">
+        <td><input type="checkbox" name="pick" value="{{ x.sub.id }}" aria-label="Select repeat run"></td>
+        <td></td>
+        <td><a href="/runs/{{ x.sub.id }}">Repeat run {{ x.run_number }}</a> <span class="small">{{ local(x.sub.started_at, ev.timezone, "%d %b %H:%M") }}</span></td>
+        <td></td><td></td>
+        {% if ev.event_type == 'score' %}<td class="num">{% if rr and rr.score is not none %}{{ rr.score }}{% endif %}</td>{% endif %}
+        <td class="num">{% if rr and rr.elapsed_s is not none %}{{ duration(rr.elapsed_s) }}{% endif %}</td>
+        <td>{{ status_badge(rr, x.sub) }}</td>
+      </tr>
+      {% endfor %}
+    {% else %}
+      <tr><td colspan="8" class="muted">No runs yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+<input type="hidden" name="ids" id="ids">
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('cmp').addEventListener('submit', function (e) {
+  var ids = Array.from(document.querySelectorAll('input[name=pick]:checked')).map(function (x) { return x.value; });
+  if (!ids.length) { e.preventDefault(); document.getElementById('pick-msg').hidden = false; return; }
+  document.getElementById('ids').value = ids.join(',');
+  document.querySelectorAll('input[name=pick]').forEach(function (x) { x.disabled = true; });
+});
+function filterClass(c) {
+  document.querySelectorAll('tbody tr[data-class]').forEach(function (tr) {
+    tr.style.display = (!c || tr.dataset.class === c) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

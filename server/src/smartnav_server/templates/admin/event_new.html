@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}New event · SmartNav admin{% endblock %}
+{% block content %}
+<p class="small"><a href="/admin">← Events</a></p>
+<h1>New event</h1>
+<form class="card" method="post" action="/admin/events/new">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="name">Event name</label><input id="name" name="name" type="text" required placeholder="e.g. Harcourt Hill Street-O">
+  <label for="eid">Event ID <span class="hint">used in links and the QR code; leave blank to make one from the name</span></label>
+  <input id="eid" name="event_id" type="text" placeholder="e.g. 2026-10-harcourt-hill" pattern="[a-z0-9-]*">
+  <label for="type">Event type</label>
+  <select id="type" name="event_type">{% for id, t in types.items() %}<option value="{{ id }}">{{ t.name }}: {{ t.description }}</option>{% endfor %}</select>
+  <label for="folder">Folder</label>
+  <select id="folder" name="folder_id"><option value="">(none)</option>
+    {% for f, label in folders %}<option value="{{ f.id }}" {% if folder_id == f.id %}selected{% endif %}>{{ label }}{% if f.is_series %} (series){% endif %}</option>{% endfor %}
+  </select>
+  <div class="actions"><button class="btn btn-primary">Create event</button></div>
+  <p class="small muted">The event starts as a draft. You can import the course and set dates before publishing.</p>
+</form>
+{% endblock %}

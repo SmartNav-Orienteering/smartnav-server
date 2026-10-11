@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ sub.participant_name }} · review{% endblock %}
+{% block content %}
+<p class="small"><a href="/admin/events/{{ ev.id }}/runs">← Runs for {{ ev.name }}</a></p>
+<div class="spread">
+  <div>
+    <h1>{{ sub.participant_name }}</h1>
+    <div class="muted small">{{ (sub.participant or {}).get('club','') }}{% if (sub.participant or {}).get('year_of_birth') %} · born {{ sub.participant.year_of_birth }}{% endif %}
+      · started {{ local(sub.started_at, ev.timezone) }} · {{ 'GPX upload' if sub.source == 'gpx' else 'App ' ~ (sub.device or {}).get('platform','') ~ ' ' ~ (sub.device or {}).get('app_version','') }}
+      · ended by {{ sub.end_reason|replace('_',' ') }}</div>
+  </div>
+  <div class="row">
+    {% if sub.status == 'needs_review' %}
+    <form method="post" action="/admin/runs/{{ sub.id }}/reviewed" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-primary">Mark as reviewed</button></form>
+    {% endif %}
+    <a class="btn" href="/runs/{{ sub.id }}">Public view</a>
+  </div>
+</div>
+
+{% if sub.review_reasons %}
+<div class="notice"><strong>{{ 'Needs review' if sub.status == 'needs_review' else 'Notes (reviewed)' }}:</strong><ul>{% for r in sub.review_reasons %}<li>{{ r }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+<div class="grid grid-main">
+  <div class="card">{% set replay = true %}{% include "_map.html" %}</div>
+  <div>
+    <div class="card">
+      {% set r = sub.result or {} %}
+      <div class="headline">{{ r.get('display', 'Not scored') }}</div>
+      {% for l in r.get('lines', []) %}<div class="small">{{ l }}</div>{% endfor %}
+      <h3>Controls</h3>
+      <table>
+        <thead><tr><th>Code</th><th>Status</th><th class="num">Time</th><th>Decision</th></tr></thead>
+        <tbody>
+        {% for c in r.get('controls', []) %}
+          <tr>
+            <td><strong>{{ c.code }}</strong></td>
+            <td>{% if c.status in ('ok','accepted') %}<span class="badge b-ok">{{ CONTROL_STATUS_LABELS.get(c.status, c.status) }}</span>{% elif c.status == 'phone_only' %}<span class="badge b-warn">Phone only</span>{% else %}<span class="badge b-bad">{{ CONTROL_STATUS_LABELS.get(c.status, c.status) }}</span>{% endif %}</td>
+            <td class="num small">{% if c.split_s is not none %}{{ duration(c.split_s) }}{% endif %}</td>
+            <td>
+              <form method="post" action="/admin/runs/{{ sub.id }}/control" class="row" style="gap:4px">
+                <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="code" value="{{ c.code }}">
+                {% if c.code in overrides %}
+                  <button class="btn btn-small" name="decision" value="clear" title="{{ overrides[c.code].reason }}">Undo</button>
+                {% else %}
+                  {% if c.status not in ('ok',) %}<button class="btn btn-small" name="decision" value="accepted">Accept</button>{% endif %}
+                  {% if c.status in ('ok',) %}<button class="btn btn-small btn-danger" name="decision" value="denied">Deny</button>{% endif %}
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <p class="small muted">Accepting credits the control at the phone's beep time, or where the track came closest. Each decision rescores the run and is logged.</p>
+    </div>
+
+    <form class="card" method="post" action="/admin/runs/{{ sub.id }}/rename">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <h3>Correct the name</h3>
+      <p class="small muted">Runs are matched to people by name only. Fix a misspelling so this run joins up with the person's other runs.</p>
+      <input name="name" type="text" value="{{ sub.participant_name }}" required aria-label="Participant name">
+      <label class="check"><input type="checkbox" name="all_runs" value="true"> Also rename every other run under “{{ sub.participant_name }}” (all events)</label>
+      <div class="actions"><button class="btn">Save name</button></div>
+      {% if others %}<p class="small">Other runs of this event under this name: {% for o in others %}<a href="/admin/runs/{{ o.id }}">{{ local(o.started_at, ev.timezone, "%d %b %H:%M") }}</a>{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
+    </form>
+
+    <form class="card" method="post" action="/admin/runs/{{ sub.id }}/dsq">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <h3>Disqualify</h3>
+      {% if sub.disqualified %}
+        <p>Disqualified{% if sub.dsq_reason %}: {{ sub.dsq_reason }}{% endif %}</p>
+        <button class="btn" name="action" value="reinstate">Remove disqualification</button>
+      {% else %}
+        <input name="reason" type="text" placeholder="Reason (shown to the participant)" aria-label="Reason">
+        <div class="actions"><button class="btn btn-danger" name="action" value="dsq">Disqualify run</button></div>
+      {% endif %}
+    </form>
+
+    {% if user.role == 'owner' %}
+    <form class="card danger-zone" method="post" action="/admin/runs/{{ sub.id }}/delete">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="spread"><span class="small">Delete this run permanently (for test runs).</span><button class="btn btn-small btn-danger">Delete run</button></div>
+    </form>
+    {% endif %}
+
+    <div class="card">
+      <h3>History</h3>
+      {% for h in history %}<div class="small">{{ local(h.at, ev.timezone, "%d %b %H:%M") }} · {{ h.user_name }} · {{ h.action }}{% if h.detail %}: {{ h.detail }}{% endif %}</div>
+      {% else %}<div class="small muted">No changes.</div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

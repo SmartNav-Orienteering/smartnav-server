@@ -1,0 +1,7 @@
+<div class="event-line">
+  <a href="/admin/events/{{ e.id }}"><strong>{{ e.name }}</strong></a>
+  {% if e.status == 'draft' %}<span class="badge">Draft</span>{% elif e.status == 'published' %}<span class="badge b-ok">Published</span>{% else %}<span class="badge">Archived</span>{% endif %}
+  <span class="muted small">{{ e.event_type|capitalize }} · {{ local(e.opens_at, e.timezone, "%d %b %Y") }} · {{ e.submissions|length }} runs</span>
+  {% set nr = e.submissions|selectattr('status','equalto','needs_review')|list|length %}
+  {% if nr %}<a class="badge b-warn" href="/admin/events/{{ e.id }}/runs?show=review">{{ nr }} to review</a>{% endif %}
+</div>

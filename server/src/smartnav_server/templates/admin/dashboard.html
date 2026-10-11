@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Events · SmartNav admin{% endblock %}
+{% macro folder_node(f) %}
+<li>
+  <div class="spread">
+    <div><span class="folder-name">{{ f.name }}</span>
+      {% if f.is_series %}<span class="badge b-accent">Series</span> <a class="small" href="/series/{{ f.id }}">standings</a>{% endif %}
+      <a class="small" href="/admin/folders/{{ f.id }}">edit</a></div>
+    <div class="row small"><a href="/admin/events/new?folder={{ f.id }}">+ Event</a><a href="/admin/folders/new?parent={{ f.id }}">+ Sub-folder</a></div>
+  </div>
+  <ul class="tree">
+    {% for c in f.children|sort(attribute='name') %}{{ folder_node(c) }}{% endfor %}
+    {% for e in f.events|sort(attribute='opens_at', reverse=true) %}<li>{% include "admin/_event_line.html" %}</li>{% endfor %}
+  </ul>
+</li>
+{% endmacro %}
+{% block content %}
+<div class="spread">
+  <h1>Events</h1>
+  <div class="row">
+    <a class="btn" href="/admin/folders/new">New folder or series</a>
+    <a class="btn btn-primary" href="/admin/events/new">New event</a>
+  </div>
+</div>
+{% if review_count %}<div class="notice"><a href="/admin/review">{{ review_count }} run(s) need review</a>: doubtful controls, GPS gaps or uploads from GPX files.</div>{% endif %}
+<div class="card">
+  {% if not roots and not loose %}
+    <p class="muted">No events yet. Create a folder (for example a season or series), then add events to it.</p>
+  {% endif %}
+  <ul class="tree">
+    {% for f in roots %}{{ folder_node(f) }}{% endfor %}
+    {% for e in loose %}<li>{% include "admin/_event_line.html" %}</li>{% endfor %}
+  </ul>
+</div>
+{% endblock %}

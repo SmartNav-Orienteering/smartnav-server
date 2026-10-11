@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Account · SmartNav admin{% endblock %}
+{% block content %}
+<h1>Your account</h1>
+<p class="muted">{{ user.name }} · {{ user.email }} · {{ user.role|capitalize }}</p>
+<form class="card" method="post" action="/admin/account" style="max-width:440px">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h2>Change password</h2>
+  <label for="c">Current password</label><input id="c" name="current" type="password" required autocomplete="current-password">
+  <label for="p">New password</label><input id="p" name="password" type="password" required minlength="10" autocomplete="new-password">
+  <div class="actions"><button class="btn btn-primary">Change password</button></div>
+</form>
+{% endblock %}

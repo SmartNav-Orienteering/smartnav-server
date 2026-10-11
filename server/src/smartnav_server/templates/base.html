@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SmartNav{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="brand" href="{% if user %}/admin{% else %}/{% endif %}"><span class="brand-mark" aria-hidden="true"></span>SmartNav</a>
+    <nav class="nav">
+      {% if user %}
+        <a href="/admin">Events</a>
+        <a href="/admin/review">Review</a>
+        {% if user.role == 'owner' %}<a href="/admin/users">Users</a><a href="/admin/settings">Settings</a>{% endif %}
+        <a href="/admin/account">Account</a>
+        <a href="/">Public site</a>
+        <form method="post" action="/admin/logout" class="inline"><button class="linkish">Sign out</button></form>
+      {% else %}
+        <a href="/">Results</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  {% if flash %}<div class="flash flash-{{ flash.kind }}" role="status">{{ flash.message }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="wrap site-footer">SmartNav server · paper map required · GPS-checked navigation events</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

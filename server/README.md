@@ -1,13 +1,24 @@
 # server
 
-The SmartNav host application.
+The SmartNav host application: FastAPI, SQLAlchemy with SQLite, Jinja templates and a bundled copy of Leaflet for maps.
 
-Planned stack:
+| Module | Purpose |
+| --- | --- |
+| `api_v1.py` | The `/v1` API for the phone app (see `docs/contract-v1.md`) |
+| `admin.py` | Admin site: events, folders, imports, review tools, users, settings |
+| `public.py` | Public results, track maps, series standings, GPX upload |
+| `submissions.py` | Validating, storing and idempotent handling of runs; GPX conversion |
+| `scoring.py` | Running the event-type plugin, review flags, first-run ranking, series |
+| `packages.py` | Building course packages and keeping every published version |
+| `importers.py` | KML, KMZ (map overlay) and GPX readers |
+| `plugins.py` | Discovers event types through the `smartnav.event_types` entry point |
+| `db.py` | Database models |
+| `cli.py` | The `smartnav` command |
 
-- Python 3.12+ with FastAPI for the API in `docs/contract-v1.md`
-- Pydantic models for the package, submission and result formats
-- SQLite (via SQLAlchemy) for events and results; tracks stored as files
-- Server-rendered admin and results pages (Jinja + HTMX, Leaflet for maps)
-- Distributed as a Docker image and as a `pip install smartnav-server` package
+Raw submissions are stored as JSON files under `data/submissions/<event>/`, so runs can always be rescored, even after scoring rules change.
 
-No code yet.
+Run the tests from the repository root:
+
+```
+python -m pytest server/tests plugins/tests
+```
