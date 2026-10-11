@@ -246,3 +246,29 @@ def test_users_and_roles(admin):
     c.post("/admin/login", data={"csrf": tok, "email": "dee@example.org", "password": "delegate pass 1"})
     assert c.get("/admin").status_code == 200
     assert c.get("/admin/users").status_code == 403
+
+
+def test_unordered_courses_list_controls_in_ascending_order(admin):
+    import re
+
+    c = admin
+    kml = b"""<?xml version="1.0"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>
+    <Placemark><name>F</name><Point><coordinates>149.0820,-35.2314,0</coordinates></Point></Placemark>
+    <Placemark><name>10</name><Point><coordinates>149.0851,-35.2288,0</coordinates></Point></Placemark>
+    <Placemark><name>3</name><Point><coordinates>149.0834,-35.2265,0</coordinates></Point></Placemark>
+    <Placemark><name>S</name><Point><coordinates>149.0823,-35.2310,0</coordinates></Point></Placemark>
+    <Placemark><name>1</name><Point><coordinates>149.0799,-35.2299,0</coordinates></Point></Placemark>
+    </Document></kml>"""
+    for et, expected in (("score", ["1", "3", "10"]), ("scatter", ["1", "3", "10"]), ("line", ["10", "3", "1"])):
+        tok = csrf(c, "/admin/events/new")
+        r = c.post("/admin/events/new", data={"csrf": tok, "name": f"Order {et}", "event_type": et}, follow_redirects=False)
+        eid = r.headers["location"].rsplit("/", 1)[-1]
+        tok = csrf(c, f"/admin/events/{eid}")
+        c.post(f"/admin/events/{eid}/import", data={"csrf": tok}, files={"file": ("c.kml", kml, "application/xml")})
+        html = c.get(f"/admin/events/{eid}").text
+        course = html.split('id="course"')[1].split("</table>")[0]
+        rows = re.findall(r"<tr><td><strong>([^<]+)</strong>", course)
+        assert rows == ["Start", *expected, "Finish"], (et, rows)
+        if et == "score":
+            pts = re.findall(r'name="points_([^"]+)"', html)
+            assert pts == expected

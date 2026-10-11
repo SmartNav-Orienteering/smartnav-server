@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ ev.name }} · SmartNav admin{% endblock %}
 {% block content %}
+{% set shown_controls = display_controls(ev.controls, et.ordered if et else true) %}
 <p class="small"><a href="/admin">← Events</a>{% if ev.folder %} / {{ ev.folder.name }}{% endif %}</p>
 <div class="spread">
   <div>
@@ -84,7 +85,7 @@
       <thead><tr><th>Code</th><th class="num">Lat</th><th class="num">Lon</th></tr></thead>
       <tbody>
         {% if ev.start %}<tr><td><strong>Start</strong></td><td class="num mono">{{ '%.6f'|format(ev.start.lat) }}</td><td class="num mono">{{ '%.6f'|format(ev.start.lon) }}</td></tr>{% endif %}
-        {% for c in ev.controls %}<tr><td><strong>{{ c.code }}</strong></td><td class="num mono">{{ '%.6f'|format(c.lat) }}</td><td class="num mono">{{ '%.6f'|format(c.lon) }}</td></tr>{% endfor %}
+        {% for c in shown_controls %}<tr><td><strong>{{ c.code }}</strong></td><td class="num mono">{{ '%.6f'|format(c.lat) }}</td><td class="num mono">{{ '%.6f'|format(c.lon) }}</td></tr>{% endfor %}
         {% if ev.finish %}<tr><td><strong>Finish</strong></td><td class="num mono">{{ '%.6f'|format(ev.finish.lat) }}</td><td class="num mono">{{ '%.6f'|format(ev.finish.lon) }}</td></tr>{% endif %}
         {% if not ev.controls %}<tr><td colspan="3" class="muted">No controls yet.</td></tr>{% endif %}
       </tbody>
@@ -101,7 +102,7 @@
         <label>{{ p.label }}</label>
         {% if not ev.controls %}<p class="muted small">Import the controls first.</p>{% endif %}
         <div class="fields fields-3">
-        {% for c in ev.controls %}
+        {% for c in shown_controls %}
           <div class="row"><label for="pt-{{ c.code }}" style="width:52px;margin:0">{{ c.code }}</label>
             <input id="pt-{{ c.code }}" name="points_{{ c.code }}" type="number" min="0" step="1" style="width:100px" value="{{ (ev.params.points or {}).get(c.code, '') }}"></div>
         {% endfor %}

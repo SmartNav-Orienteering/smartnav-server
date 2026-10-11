@@ -52,12 +52,28 @@ CONTROL_STATUS_LABELS = {
     "denied": "Denied by organiser",
 }
 
+def natural_key(code: str):
+    """Sort key so control codes run 1, 2, 10 (not 1, 10, 2) and letters still sort."""
+    import re
+
+    return [(0, int(p), "") if p.isdigit() else (1, 0, p.casefold()) for p in re.split(r"(\d+)", str(code)) if p]
+
+
+def display_controls(controls: list, ordered: bool) -> list:
+    """Controls as shown to organisers: course order for line courses,
+    ascending code order for courses taken in any order."""
+    if ordered:
+        return list(controls)
+    return sorted(controls, key=lambda c: natural_key(c["code"]))
+
+
 TEMPLATES.env.globals.update(
     local=local,
     local_input=local_input,
     duration=format_duration,
     STATUS_LABELS=STATUS_LABELS,
     CONTROL_STATUS_LABELS=CONTROL_STATUS_LABELS,
+    display_controls=display_controls,
 )
 
 
